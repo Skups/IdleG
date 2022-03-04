@@ -1,4 +1,11 @@
+TILE = 8
+WIDTH = 480
+HEIGHT = 360
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+GREY = (127, 127, 127)
+GREEN = (152, 251, 152)
+
 
 TICK = 60
