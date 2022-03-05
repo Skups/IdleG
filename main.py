@@ -19,6 +19,8 @@ class Control():
     def __init__(self) -> None:
         pass
 
+    
+
 class Hud():
     def __init__(self, win) -> None:
         self.win = win
@@ -49,8 +51,6 @@ class Button():
 
         self.rect = Rect(pos_x, pos_y, size_x, size_y)
 
-
-
     def click(self,event):
         button = self.rect
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -60,6 +60,67 @@ class Button():
 
     def render(self):
         pygame.draw.rect(window, WHITE, self.rect)
+
+
+class Adder(Utilities):
+    def __init__(self, size) -> None:
+        self.size = size
+        self.addition = self.size
+        self.upgrades = 0
+
+        self.upgrade_size = 0.2
+        self.upgrade_size_rate = 1.2
+
+        self.upgrade_cost = 10
+        self.upgrade_cost_rate = 1.3
+    
+    def upgrade(self, money):
+        if money.amount >= self.upgrade_cost:
+            money.amount -= self.upgrade_cost
+            money.amount = round(money.amount, 2)
+            
+            self.addition += self.upgrade_size
+            self.addition = round(self.addition, 2)
+            self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
+            self.upgrade_cost = round(self.upgrade_cost, 2)
+            self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
+            self.upgrades += 1
+
+        else:
+            pass
+
+class SelfAdder():
+    def __init__(self, size) -> None:
+        self.size = size
+        self.addition = 0
+        self.upgrades = 0
+
+        self.upgrade_size = self.size * 5
+        self.upgrade_size_rate = 1.2
+
+        self.upgrade_cost = 10**(self.size + 1)
+        self.upgrade_cost_rate = 1.3
+        
+        self.speed = 1
+        self.speedcalc = self.speed * 60 / 0.6
+
+    
+    def upgrade(self, money):
+        if money.amount >= self.upgrade_cost:
+            money.amount -= self.upgrade_cost
+            money.amount = round(money.amount, 2)
+            
+            self.addition += self.upgrade_size
+            self.addition = round(self.addition, 2)
+            self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
+            self.upgrade_cost = round(self.upgrade_cost, 2)
+            self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
+            self.upgrades += 1
+
+        else:
+            pass
+
+
 
 class Page(Hud, Button):
     def __init__(self, name, text, button, adder) -> None:
@@ -77,68 +138,30 @@ class Page(Hud, Button):
         self.button = button
         self.adder = adder
 
-    def render(self, size, upgrade_cost, upgrades, button):
+    
+
+    def render(self, addition, upgrade_cost, upgrades, button):
         pygame.draw.rect(window, GREY, self.rect)
 
         self.text_display(f'{self.name}', BLACK, TILE*2, self.pos_y)
 
-        self.text_display(f'Adding by :{size}', WHITE, TILE*2, self.pos_y + 5*TILE)
+        self.text_display(f'Adding by :{addition}', WHITE, TILE*2, self.pos_y + 5*TILE)
         self.text_display(f'Needed to upgrade : {upgrade_cost}', WHITE, TILE*2, self.pos_y + 9*TILE)
         self.text_display(f'Upgrade lvl : {upgrades}', WHITE, TILE*2, self.pos_y + 13*TILE)
 
         pygame.draw.rect(window, WHITE, button.rect)
 
+    def upgrades(self, event, money):
+        if self.button.click(event):
+            self.adder.upgrade(money)
 
 class Money(Utilities):
     def __init__(self, amount) -> None:
         self.amount = float(amount)
 
     def add(self, adder):
-        self.amount += adder.size
+        self.amount += adder.addition
         self.amount = round(self.amount, 2)
-
-
-class Adder(Utilities):
-    def __init__(self, size) -> None:
-        self.size = size
-        self.upgrades = 0
-
-        self.upgrade_size = 0.2
-        self.upgrade_size_rate = 1.2
-
-        self.upgrade_cost = 10
-        self.upgrade_cost_rate = 1.3
-    
-
-    def upgrade(self, money):
-        if money.amount >= self.upgrade_cost:
-            money.amount -= self.upgrade_cost
-            money.amount = round(money.amount, 2)
-            
-            self.size += self.upgrade_size
-            self.size = round(self.size, 2)
-            self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
-            self.upgrade_cost = round(self.upgrade_cost, 2)
-            self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
-            self.upgrades += 1
-        else:
-            pass
-
-class SelfAdder(Adder):
-    def __init__(self, size) -> None:
-        self.size = size
-        self.upgrades = 0
-
-        self.upgrade_size = 0.2
-        self.upgrade_size_rate = 1.2
-
-        self.upgrade_cost = 10
-        self.upgrade_cost_rate = 1.3
-        
-
-        self.speed = 1
-        self.speedcalc = 5 * (TICK / (self.speed)) 
-
 
 
 
@@ -147,7 +170,12 @@ def window_render():
     buttonClicker.render()
     hud.money_count(money.amount)
 
-
+def scroll(event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 4:
+                return 1
+            elif event.button == 5:
+                return 2
 
 def quit(keys):
     for event in pygame.event.get():
@@ -167,10 +195,13 @@ pygame.mixer.init()
 pygame.display.set_caption('IdleG')
 clock = pygame.time.Clock()
 
+
 adder = Adder(1)
 selfAdder1 = SelfAdder(1)
 selfAdder2 = SelfAdder(2)
-money = Money(0)
+selfAdder3 = SelfAdder(3)
+
+money = Money(1000)
 hud = Hud(window)
 
 buttonClicker = Button(WIDTH - TILE*9, TILE, TILE*8, TILE*8)
@@ -178,27 +209,32 @@ buttonClicker = Button(WIDTH - TILE*9, TILE, TILE*8, TILE*8)
 buttonClickUpgrade = Button(1000,0,10,1000)
 buttonUpgrade1 = Button(1000,0,10,1000)
 buttonUpgrade2 = Button(1000,0,10,1000)
+buttonUpgrade3 = Button(1000,0,10,1000)
 
 pick = Page("Clicker", "click click click...", buttonClickUpgrade, adder)
 coal = Page("Coal Mine", "mining coal since the 1700s", buttonUpgrade1, selfAdder1)
 iron = Page("Iron Mine", "iron ore pouring out all the time", buttonUpgrade2, selfAdder2)
+silver = Page("Silver Mine", "Silver ore pouring out all the time", buttonUpgrade3, selfAdder3)
 
-pages = [pick, coal, iron]
+pages = [pick, coal, iron, silver]
+selfadders = [coal, iron, silver]
+
+
+page_n = 0
 
 running = True
 gametick = 0
 
-page_n = 0
-
-
 while running:
     clock.tick(TICK)
     gametick += 1
+    if gametick == 1000:
+        gametick = 0
 
     for page in pages:
         if page != page_n:
-            page.button.rect = Rect(1000,0,10,1000)
-    pages[page_n].button.rect = Rect(TILE*49, TILE*38, TILE*8, TILE*4)
+            page.button.rect = Rect(-1,-1,0,0)
+    pages[page_n].button.rect = Rect(UPGRADE_BUTTON_RECT)
 
     keys = pygame.key.get_pressed()
 
@@ -207,21 +243,14 @@ while running:
         if buttonClicker.click(event):
             money.add(adder)
 
-        elif pick.button.click(event):
-            pick.adder.upgrade(money)
+        for page in pages:
+            page.upgrades(event, money)
 
-        elif coal.button.click(event):
-            coal.adder.upgrade(money)
-
-        elif iron.button.click(event):
-            iron.adder.upgrade(money)
-
-
-        if keys[pygame.K_RIGHT]:
+        if scroll(event) == 2:
             page_n += 1
             if page_n == len(pages):
                 page_n = 0
-        elif keys[pygame.K_LEFT]:
+        elif scroll(event) == 1:
             if page_n == 0:
                 page_n = len(pages)
             page_n -= 1
@@ -229,15 +258,20 @@ while running:
     else:
         pass
 
-    if gametick / selfAdder1.speedcalc == 0:
-        money.add(selfAdder1)
+    for selfadder in selfadders:
 
-    
+        if gametick % selfadder.adder.speedcalc == 0:
+            money.add(selfadder.adder)
 
     running = quit(keys)
 
 
     window_render()
-    pages[page_n].render(pages[page_n].adder.size, pages[page_n].adder.upgrade_cost, pages[page_n].adder.upgrades, pages[page_n].button) 
-    hud.text_display(f'page:{page_n}', WHITE, TILE*8, TILE*5)
+    pages[page_n].render(pages[page_n].adder.addition, pages[page_n].adder.upgrade_cost, pages[page_n].adder.upgrades, pages[page_n].button) 
+   
+        # DEBUG TOOLS
+    # hud.text_display(f'page:{page_n}', WHITE, TILE*8, TILE*5) # PAGE NUMBER
+    # hud.text_display(f'{gametick}', GREEN, TILE*24, TILE*5) # TICK
+  
+  
     pygame.display.flip()
