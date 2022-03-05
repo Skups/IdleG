@@ -1,13 +1,20 @@
-TILE = 8
-WIDTH = 1280
-HEIGHT = 720
+TILE = 8*2
+WIDTH = 480*2
+HEIGHT = 360*2
 
 UPGRADE_BUTTON_RECT = (WIDTH-TILE*10, HEIGHT-TILE*6, TILE*8, TILE*4)
+NULL_BUTTON_RECT = (-1,-1,0,0)
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREY = (127, 127, 127)
 GREEN = (152, 251, 152)
 
+COL1 = (119, 51 , 68 )  #Dark Red
+COL2 = (58 , 68 , 93 )  #Dark Blue
+COL3 = (94 , 87 , 104)  #Grey
+COL4 = (146, 135, 121)  #Dark Orange
+COL5 = (212, 210, 165)  #Yellow
+COL6 = (252, 222, 190)  #Beige
 
-TICK = 60
+TICK = 60/2
