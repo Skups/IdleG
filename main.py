@@ -174,9 +174,10 @@ money = Money(0)
 hud = Hud(window)
 
 buttonClicker = Button(WIDTH - TILE*9, TILE, TILE*8, TILE*8)
-buttonClickUpgrade = Button(TILE*49, TILE*38, TILE*8, TILE*4)
-buttonUpgrade1 = Button(TILE*49, TILE*38, TILE*8, TILE*4)
-buttonUpgrade2 = Button(TILE*49, TILE*38, TILE*8, TILE*4)
+
+buttonClickUpgrade = Button(1000,0,10,1000)
+buttonUpgrade1 = Button(1000,0,10,1000)
+buttonUpgrade2 = Button(1000,0,10,1000)
 
 pick = Page("Clicker", "click click click...", buttonClickUpgrade, adder)
 coal = Page("Coal Mine", "mining coal since the 1700s", buttonUpgrade1, selfAdder1)
@@ -194,6 +195,11 @@ while running:
     clock.tick(TICK)
     gametick += 1
 
+    for page in pages:
+        if page != page_n:
+            page.button.rect = Rect(1000,0,10,1000)
+    pages[page_n].button.rect = Rect(TILE*49, TILE*38, TILE*8, TILE*4)
+
     keys = pygame.key.get_pressed()
 
     for event in pygame.event.get():
@@ -201,14 +207,17 @@ while running:
         if buttonClicker.click(event):
             money.add(adder)
 
-        elif coal.click(event):
-            adder.upgrade(money)
+        elif pick.button.click(event):
+            pick.adder.upgrade(money)
 
-        elif buttonUpgrade2.click(event):
-            selfAdder1.upgrade(money)
+        elif coal.button.click(event):
+            coal.adder.upgrade(money)
+
+        elif iron.button.click(event):
+            iron.adder.upgrade(money)
 
 
-        elif keys[pygame.K_RIGHT]:
+        if keys[pygame.K_RIGHT]:
             page_n += 1
             if page_n == len(pages):
                 page_n = 0
