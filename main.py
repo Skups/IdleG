@@ -30,9 +30,9 @@ class Hud():
         
     def draw_grid(self):
         for x in range(0, WIDTH, TILE):
-            pygame.draw.line(window, COL1, (x, 0), (x, HEIGHT))
+            pygame.draw.line(window, WHITE, (x, 0), (x, HEIGHT))
         for y in range(0, HEIGHT, TILE):
-            pygame.draw.line(window, COL1, (0, y), (WIDTH, y))
+            pygame.draw.line(window, WHITE, (0, y), (WIDTH, y))
     
 
 class Button():
@@ -43,17 +43,24 @@ class Button():
         self.size_x = size_x
         self.size_y = size_y
 
+        self.clicked = 0
+
         self.rect = Rect(pos_x, pos_y, size_x, size_y)
 
     def click(self,event):
-        button = self.rect
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                if button.collidepoint(event.pos):
+            # if event.button == 1:
+                if self.rect.collidepoint(event.pos):
+                    self.clicked = 1
                     return 1
+        else:
+            self.clicked = 0
 
     def render(self):
-        pygame.draw.rect(window, WHITE, self.rect)
+        if self.clicked:
+            pygame.draw.rect(window, MBLUE, self.rect)
+        else:
+            pygame.draw.rect(window, LBLUE, self.rect)
 
 
 class Adder(Utilities):
@@ -133,6 +140,7 @@ class Page(Hud, Button):
         self.size_y = HEIGHT/2 - TILE
 
         self.x = 0
+        self.graphic_gametick = 0
 
         self.rect = pygame.Rect(self.pos_x, self.pos_y, self.size_x, self.size_y)
 
@@ -148,33 +156,32 @@ class Page(Hud, Button):
 
 
     def render(self):
-        pygame.draw.rect(window, COL4, self.rect)
+        pygame.draw.rect(window, BLUE, self.rect)
         if isinstance(self.adder, Adder):
             pass
         else:
             if self.adder.addition == 0:
                 pass
             else:
-                if gametick % self.adder.speed == 0:
-                    self.x = gametick // self.adder.speed
-                    print(self.x)
-                graphic_gametick = gametick - (self.x * self.adder.speed)
-                # else:
-                #     graphic_gametick = gametick
-                pygame.draw.rect(window, COL6, (self.pos_x, self.pos_y, ((graphic_gametick/self.adder.speed)*self.size_x), self.size_y))
+                pygame.draw.rect(window, LBLUE, (self.size_x / 2, self.pos_y, ((self.graphic_gametick/self.adder.speed)*self.size_x/2), TILE*4))
 
 
-        self.text_display(f'{self.name}', COL2, TILE*2, self.pos_y)
-        self.text_display(f'{self.text}', COL6, WIDTH/2, self.pos_y, TILE*2)
+        self.text_display(f'{self.name}', BLACK, TILE*2, self.pos_y)
+        self.text_display(f'{self.text}', ORANGE, WIDTH/2, self.pos_y, TILE*2)
 
         self.text_display(f'Adding by :{self.adder.addition}', WHITE, TILE*2, self.pos_y + 5*TILE)
         self.text_display(f'Needed to upgrade : {self.adder.upgrade_cost}', WHITE, TILE*2, self.pos_y + 9*TILE)
         self.text_display(f'Upgrade lvl : {self.adder.upgrades}', WHITE, TILE*2, self.pos_y + 13*TILE)
 
+        self.button.render()
+
+        #***********MAKE THIS WORK********
         if money.amount >= self.adder.upgrade_cost:
-            pygame.draw.rect(window, GREEN, self.button.rect)
-        else:
-            pygame.draw.rect(window, WHITE, self.button.rect)
+            self.tranpartent_layer = pygame.Surface((self.button.size_x, self.button.size_y))
+            self.tranpartent_layer.set_alpha(128)
+            self.tranpartent_layer.fill(ORANGE)
+            window.blit(self.tranpartent_layer, (self.button.pos_x, self.button.pos_y))
+
 
     def upgrades(self, event, money):
         if self.button.click(event):
@@ -188,18 +195,28 @@ class Money(Utilities):
         self.amount += adder.addition
         self.amount = round(self.amount, 2)
 
+    def self_add(self):
+        for selfadder in Page.selfadder_pages:  
+
+            if gametick % selfadder.adder.speed == 0:
+                money.add(selfadder.adder)
+                selfadder.graphic_gametick = 0
+
+            selfadder.graphic_gametick += 1                
+
+
 def page_dots(pages, page_pos):
     for i in range(len(pages)):
         coordinates = (TILE + (TILE*i + TILE)+i, HEIGHT - TILE*2) #Circle Center x, y
         if i == page_pos:
-            pygame.draw.circle(window, COL3, coordinates, int(TILE/1.5))
+            pygame.draw.circle(window, LBLUE, coordinates, int(TILE/2))
         else:
-            pygame.draw.circle(window, COL5, coordinates, int(TILE/2))
+            pygame.draw.circle(window, MBLUE, coordinates, int(TILE/2))
 
 
 
 def window_render():
-    window.fill(COL3)
+    window.fill(DARK)
     buttonClicker.render()
     hud.money_count(money.amount)
 
@@ -239,8 +256,8 @@ buttonClicker = Button(WIDTH - TILE*17, TILE, TILE*16, TILE*16)
 buttonClickUpgrade = Button(-1,-1,0,0)
 
 
-pick = Page("Clicker", "click click click...")
-coal = Page("Coal Mine", "mining coal since the 1700s")
+pick = Page("Clicker")
+coal = Page("Coal Mine")
 iron = Page("Iron Mine")
 silver = Page("Silver Mine")
 gold = Page("Gold Ore")
@@ -253,9 +270,6 @@ gametick = 0
 while running:
     clock.tick(TICK)
     gametick += 1
-    if gametick == 360:
-        gametick = 0
-
     
     for page in Page.pages:
         if page != page_pos:
@@ -289,13 +303,9 @@ while running:
     else:
         pass
 
-    for selfadder in Page.selfadder_pages:
-
-        if gametick % selfadder.adder.speed == 0:
-            money.add(selfadder.adder)
+    money.self_add()
 
     running = quit(keys)
-
 
     window_render()
 
@@ -304,5 +314,5 @@ while running:
     # hud.text_display(f'{gametick}', GREEN, TILE*24, TILE*5)   # TICK
     # hud.draw_grid()                                           # GRID
   
-  
+    
     pygame.display.flip()
