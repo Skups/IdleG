@@ -5,20 +5,9 @@ from constants import *
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 
-class Utilities():
-    def __init__(self) -> None:
-        pass
-
-    def round(self, num):
-        num = round(num, 2)
-
-class Control():
-    def __init__(self) -> None:
-        pass
-
 class Hud():
-    def __init__(self, win) -> None:
-        self.win = win
+    def __init__(self) -> None:
+        pass
 
     def text_display(self, text, color,x,y, size = TILE*4):
         font = pygame.font.Font("BebasNeue-Regular.ttf", size)
@@ -63,7 +52,7 @@ class Button():
             pygame.draw.rect(window, LBLUE, self.rect)
 
 
-class Adder(Utilities):
+class Adder():
     def __init__(self, size) -> None:
         self.size = size
         self.addition = self.size
@@ -75,6 +64,7 @@ class Adder(Utilities):
         self.upgrade_cost = 10
         self.upgrade_cost_rate = 1.3
 
+    def upgrade(self, money):
         if money.amount >= self.upgrade_cost:
             money.amount -= self.upgrade_cost
             money.amount = round(money.amount, 2)
@@ -181,7 +171,7 @@ class Page(Hud, Button):
         if self.button.click(event):
             self.adder.upgrade(money)
 
-class Money(Utilities):
+class Money():
     def __init__(self, amount) -> None:
         self.amount = float(amount)
 
@@ -249,9 +239,9 @@ pygame.mixer.init()
 pygame.display.set_caption('IdleG')
 clock = pygame.time.Clock()
 
-hud = Hud(window)
+hud = Hud()
 
-money = Money(0)
+money = Money(data["money"])
 buttonClicker = Button(WIDTH - TILE*17, TILE, TILE*16, TILE*16)
 buttonClickUpgrade = Button(-1,-1,0,0)
 
