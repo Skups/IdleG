@@ -1,7 +1,10 @@
+from pickle import FALSE, TRUE
 import pygame
 from pygame import Rect
 from itertools import count
+
 from constants import *
+from save_system import *
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -12,10 +15,10 @@ class Hud():
     def text_display(self, text, color,x,y, size = TILE*4):
         font = pygame.font.Font("BebasNeue-Regular.ttf", size)
         font_render = font.render(str(text), True, color)
-        window.blit(font_render,(x,y))
+        window.blit(font_render,(int(x),int(y)))
 
     def money_count(self, amount):
-        self.text_display(f'Money : {amount} $', WHITE, 10, 10)
+        self.text_display(f'Money : {amount:,} $', WHITE, 10, 10)
         
     def draw_grid(self):
         for x in range(0, WIDTH, TILE):
@@ -53,16 +56,27 @@ class Button():
 
 
 class Adder():
-    def __init__(self, size) -> None:
+    def __init__(self, size, upgrades = 0) -> None:
         self.size = size
         self.addition = self.size
-        self.upgrades = 0
+        self.upgrades = upgrades
 
         self.upgrade_size = 0.2
         self.upgrade_size_rate = 1.2
 
         self.upgrade_cost = 10
         self.upgrade_cost_rate = 1.3
+        
+
+        for _ in range(self.upgrades):
+            self.load_upgrades()
+
+    def load_upgrades(self):
+        self.addition += self.upgrade_size
+        self.addition = round(self.addition, 2)
+        self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
+        self.upgrade_cost = round(self.upgrade_cost, 2)
+        self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
 
     def upgrade(self, money):
         if money.amount >= self.upgrade_cost:
@@ -76,14 +90,13 @@ class Adder():
             self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
             self.upgrades += 1
 
-        else:
-            pass
+
 
 class SelfAdder():
-    def __init__(self, size) -> None:
+    def __init__(self, size, upgrades = 0) -> None:
         self.size = size
         self.addition = 0
-        self.upgrades = 0
+        self.upgrades = upgrades
 
         self.upgrade_size = 5 ** self.size 
         self.upgrade_size_rate = 1.2
@@ -93,22 +106,31 @@ class SelfAdder():
         
         self.speed = self.size * 60
 
+        for _ in range(self.upgrades):
+            self.load_upgrades()
+
+    def load_upgrades(self):
+        self.addition += self.upgrade_size
+        self.addition = round(self.addition, 2)
+        self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
+        self.upgrade_cost = round(self.upgrade_cost, 2)
+        self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
+        # self.speed = self.speed - self.upgrades
+
 
     def upgrade(self, money):
         if money.amount >= self.upgrade_cost:
             money.amount -= self.upgrade_cost
             money.amount = round(money.amount, 2)
-            
+        
             self.addition += self.upgrade_size
             self.addition = round(self.addition, 2)
             self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
             self.upgrade_cost = round(self.upgrade_cost, 2)
             self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
-            self.speed = self.speed - self.upgrades
+            # self.speed = self.speed - self.upgrades
             self.upgrades += 1
 
-        else:
-            pass
 
 
 
@@ -117,16 +139,16 @@ class Page(Hud, Button):
     pages = []
     selfadder_pages = []
 
-    def __init__(self, name, level=0, text="") -> None:
+    def __init__(self, name, adder_upgrades=0, text="") -> None:
 
         self.name = name
         self.text = text
         self.page_amount = next(self.page_amount)
 
-        self.pos_x = TILE
-        self.pos_y = HEIGHT/2
-        self.size_x = WIDTH - TILE*2
-        self.size_y = HEIGHT/2 - TILE
+        self.pos_x = int(TILE)
+        self.pos_y = int(HEIGHT/2)
+        self.size_x = int(WIDTH - TILE*2)
+        self.size_y = int(HEIGHT/2 - TILE)
 
         self.x = 0
         self.graphic_gametick = 0
@@ -136,9 +158,9 @@ class Page(Hud, Button):
         self.button = Button(-1,-1,0,0)
         
         if self.page_amount < 1:
-            self.adder = Adder(1)
+            self.adder = Adder(1, adder_upgrades)
         else: 
-            self.adder = SelfAdder(int(self.page_amount))
+            self.adder = SelfAdder(int(self.page_amount), adder_upgrades)
             self.selfadder_pages.append(self)
 
         self.pages.append(self)
@@ -152,15 +174,16 @@ class Page(Hud, Button):
             if self.adder.addition == 0:
                 pass
             else:
-                pygame.draw.rect(window, LBLUE, (self.size_x / 2, self.pos_y, ((self.graphic_gametick/self.adder.speed)*self.size_x/2), TILE*4))
+                pygame.draw.rect(window, LBLUE, (int(self.size_x / 2), int(self.pos_y), int(((self.graphic_gametick/self.adder.speed)*self.size_x/2)), int(TILE*4)))
 
 
         self.text_display(f'{self.name}', BLACK, TILE*2, self.pos_y)
         self.text_display(f'{self.text}', ORANGE, WIDTH/2, self.pos_y, TILE*2)
 
-        self.text_display(f'Adding by :{self.adder.addition}', WHITE, TILE*2, self.pos_y + 5*TILE)
-        self.text_display(f'Needed to upgrade : {self.adder.upgrade_cost}', WHITE, TILE*2, self.pos_y + 9*TILE)
-        self.text_display(f'Upgrade lvl : {self.adder.upgrades}', WHITE, TILE*2, self.pos_y + 13*TILE)
+        self.text_display(f'Adding by : {self.adder.addition:,}', WHITE, TILE*2, self.pos_y + 5*TILE)
+        self.text_display(f'Next upgrade: {round(self.adder.addition + self.adder.upgrade_size, 2):,}', WHITE, TILE*2, self.pos_y + 9*TILE)
+        self.text_display(f'Needed to upgrade : {self.adder.upgrade_cost:,} $', WHITE, TILE*2, self.pos_y + 13*TILE)
+        self.text_display(f'Upgrade lvl : {self.adder.upgrades:,}', WHITE, TILE*2, self.pos_y + 17*TILE)
 
         self.button.render()
 
@@ -197,13 +220,10 @@ def page_dots(pages, page_pos):
         else:
             pygame.draw.circle(window, MBLUE, coordinates, int(TILE/2))
 
-
-
 def window_render():
     window.fill(DARK)
     buttonClicker.render()
     hud.money_count(money.amount)
-
     Page.pages[page_pos].render() 
     page_dots(Page.pages, page_pos)
     
@@ -229,34 +249,41 @@ def quit(keys):
     if keys[pygame.K_ESCAPE]:
         return 0
     else: return 1
-
+    
+def save_data():
+    for i, page in enumerate(Page.pages):
+        data[f"{i}"] = page.adder.upgrades
+    data["money"] = money.amount
+    data["time"] = gametick
 
 
 pygame.init()
 pygame.mixer.init()
-
-
 pygame.display.set_caption('IdleG')
 clock = pygame.time.Clock()
 
 hud = Hud()
 
-money = Money(data["money"])
 buttonClicker = Button(WIDTH - TILE*17, TILE, TILE*16, TILE*16)
 buttonClickUpgrade = Button(-1,-1,0,0)
 
 
-pick = Page("Clicker")
-coal = Page("Coal Mine")
-iron = Page("Iron Mine")
-silver = Page("Silver Mine")
-gold = Page("Gold Ore")
+data = load_file()
+
+money = Money(data["money"])
+
+pick = Page("Clicker", data[f"{len(Page.pages)}"])
+coal = Page("Coal Mine", data[f"{len(Page.pages)}"])
+iron = Page("Iron Mine", data[f"{len(Page.pages)}"])
+silver = Page("Silver Mine", data[f"{len(Page.pages)}"])
+gold = Page("Gold Ore", data[f"{len(Page.pages)}"])
+diamond = Page("Diamonds", data[f"{len(Page.pages)}"])
 
 
 page_pos = 0
 
 running = True
-gametick = 0
+gametick = data["time"]
 
 while running:
     clock.tick(TICK)
@@ -272,10 +299,10 @@ while running:
 
     if keys[pygame.K_m]:
         money.amount += 10000
+    if keys[pygame.K_n]:
+        money.amount -= 10000
 
     for event in pygame.event.get():
-        
-
         if buttonClicker.click(event):
             money.add(pick.adder)
 
@@ -306,3 +333,6 @@ while running:
     # hud.draw_grid()                                           # GRID
     
     pygame.display.flip()
+
+save_data()
+save_file(data)

@@ -7,7 +7,8 @@
 Functional
 - [x] Make self adder work
 - [x] Automate creation of more adders
-- [ ] Saving
+- [X] Saving
+- [ ] Join the Adder and SelfAdder Classes
 - [ ] Gradual unlocking, progression system 
 - [ ] Prestige system
 
