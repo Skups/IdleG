@@ -49,7 +49,7 @@ class Button():
 
     def click(self,event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # if event.button == 1:
+            if event.button == 1:
                 if self.rect.collidepoint(event.pos):
                     self.clicked = 1
                     return 1
@@ -74,12 +74,11 @@ class Adder(Utilities):
 
         self.upgrade_cost = 10
         self.upgrade_cost_rate = 1.3
-    
-    def upgrade(self, money):
+
         if money.amount >= self.upgrade_cost:
             money.amount -= self.upgrade_cost
             money.amount = round(money.amount, 2)
-            
+
             self.addition += self.upgrade_size
             self.addition = round(self.addition, 2)
             self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
@@ -104,7 +103,7 @@ class SelfAdder():
         
         self.speed = self.size * 60
 
-    
+
     def upgrade(self, money):
         if money.amount >= self.upgrade_cost:
             money.amount -= self.upgrade_cost
@@ -128,7 +127,7 @@ class Page(Hud, Button):
     pages = []
     selfadder_pages = []
 
-    def __init__(self, name, text="") -> None:
+    def __init__(self, name, level=0, text="") -> None:
 
         self.name = name
         self.text = text
@@ -175,13 +174,8 @@ class Page(Hud, Button):
 
         self.button.render()
 
-        #***********MAKE THIS WORK********
         if money.amount >= self.adder.upgrade_cost:
-            self.tranpartent_layer = pygame.Surface((self.button.size_x, self.button.size_y))
-            self.tranpartent_layer.set_alpha(128)
-            self.tranpartent_layer.fill(ORANGE)
-            window.blit(self.tranpartent_layer, (self.button.pos_x, self.button.pos_y))
-
+            draw_rect_alpha(window, LGREEN, self.button.rect, 100)
 
     def upgrades(self, event, money):
         if self.button.click(event):
@@ -224,6 +218,12 @@ def window_render():
     page_dots(Page.pages, page_pos)
     
 
+def draw_rect_alpha(surface, color, rect, alpha):
+    color_alpha = (color[0], color[1], color[2], alpha)
+    shape_surf = pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
+    pygame.draw.rect(shape_surf, color_alpha, shape_surf.get_rect())
+    surface.blit(shape_surf, rect)
+
 def scroll(event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 4:
@@ -234,11 +234,11 @@ def scroll(event):
 def quit(keys):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            return False
-        else: return True
+            return 0
+        else: return 1
     if keys[pygame.K_ESCAPE]:
-        return False
-    else: return True
+        return 0
+    else: return 1
 
 
 
@@ -262,6 +262,7 @@ iron = Page("Iron Mine")
 silver = Page("Silver Mine")
 gold = Page("Gold Ore")
 
+
 page_pos = 0
 
 running = True
@@ -280,7 +281,7 @@ while running:
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_m]:
-        money.amount += 100 
+        money.amount += 10000
 
     for event in pygame.event.get():
         
@@ -313,6 +314,5 @@ while running:
     # hud.text_display(f'page:{page_n}', WHITE, TILE*8, TILE*5) # PAGE NUMBER
     # hud.text_display(f'{gametick}', GREEN, TILE*24, TILE*5)   # TICK
     # hud.draw_grid()                                           # GRID
-  
     
     pygame.display.flip()

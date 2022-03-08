@@ -7,14 +7,16 @@
 Functional
 - [x] Make self adder work
 - [x] Automate creation of more adders
+- [ ] Saving
 - [ ] Gradual unlocking, progression system 
 - [ ] Prestige system
 
 Visual
-- [ ] Make ~~money counter~~ upgrade button green when enough money to upgrade
+- [X] Make ~~money counter~~ upgrade button change color when there is enough money to upgrade
 - [X] Add loading bars for self adders (overcomplicating it was the problem :P )
 - [X] Page indicators
 - [x] Button clicking animation
+- [ ] Upgrade buttons on pages not blinking
 - [ ] Come up with a theme
 - [ ] Icons/graphics for all the adders
 - [ ] SFX, background music
