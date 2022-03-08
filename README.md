@@ -1,6 +1,8 @@
 # IdleG
+It is a small learning project where I make an idle game from scratch using python and pygame
+
 # Notes
--
+
 
 # Features to Add
 
