@@ -1,10 +1,9 @@
-from pickle import FALSE, TRUE
 import pygame
 from pygame import Rect
-from itertools import count
+from math import floor
 
-from constants import *
-from save_system import *
+from data.constants import *
+from data.save_system import *
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -13,7 +12,7 @@ class Hud():
         pass
 
     def text_display(self, text, color,x,y, size = TILE*4):
-        font = pygame.font.Font("BebasNeue-Regular.ttf", size)
+        font = pygame.font.Font("data/BebasNeue-Regular.ttf", size)
         font_render = font.render(str(text), True, color)
         window.blit(font_render,(int(x),int(y)))
 
@@ -55,95 +54,52 @@ class Button():
             pygame.draw.rect(window, LBLUE, self.rect)
 
 
-class Adder():
-    def __init__(self, size, upgrades = 0) -> None:
-        self.size = size
-        self.addition = self.size
+class Generator():
+    def __init__(self, size, upgrades = 0, is_generator = True) -> None:
         self.upgrades = upgrades
+        self.is_generator = is_generator
+        self.upgrade_growth = 1.07
 
-        self.upgrade_size = 0.2
-        self.upgrade_size_rate = 1.2
+        self.production_base = values[f"{size}"][0]
+        self.productivity = values[f"{size}"][1]
 
-        self.upgrade_cost = 10
-        self.upgrade_cost_rate = 1.3
-        
+        self.cost_base = values[f"{size}"][2]
+        self.cost = self.cost_base * (self.upgrade_growth ** self.upgrades)
+
+        self.production = (self.upgrades * self.productivity)
+
+
+        if self.is_generator:
+            self.speed = size * 60
 
         for _ in range(self.upgrades):
             self.load_upgrades()
+            
 
     def load_upgrades(self):
-        self.addition += self.upgrade_size
-        self.addition = round(self.addition, 2)
-        self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
-        self.upgrade_cost = round(self.upgrade_cost, 2)
-        self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
-
-    def upgrade(self, money):
-        if money.amount >= self.upgrade_cost:
-            money.amount -= self.upgrade_cost
-            money.amount = round(money.amount, 2)
-
-            self.addition += self.upgrade_size
-            self.addition = round(self.addition, 2)
-            self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
-            self.upgrade_cost = round(self.upgrade_cost, 2)
-            self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
-            self.upgrades += 1
-
-
-
-class SelfAdder():
-    def __init__(self, size, upgrades = 0) -> None:
-        self.size = size
-        self.addition = 0
-        self.upgrades = upgrades
-
-        self.upgrade_size = 5 ** self.size 
-        self.upgrade_size_rate = 1.2
-
-        self.upgrade_cost = 10 ** (self.size + 1)
-        self.upgrade_cost_rate = 1.3
-        
-        self.speed = self.size * 60
-
-        for _ in range(self.upgrades):
-            self.load_upgrades()
-
-    def load_upgrades(self):
-        self.addition += self.upgrade_size
-        self.addition = round(self.addition, 2)
-        self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
-        self.upgrade_cost = round(self.upgrade_cost, 2)
-        self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
-        # self.speed = self.speed - self.upgrades
+        self.cost = self.cost_base * (self.upgrade_growth ** self.upgrades)
+        self.production = round(self.production_base + self.productivity * (self.upgrades - 1))
 
 
     def upgrade(self, money):
-        if money.amount >= self.upgrade_cost:
-            money.amount -= self.upgrade_cost
+        if money.amount >= self.cost:
+            money.amount -= self.cost
             money.amount = round(money.amount, 2)
-        
-            self.addition += self.upgrade_size
-            self.addition = round(self.addition, 2)
-            self.upgrade_cost = self.upgrade_cost * self.upgrade_cost_rate
-            self.upgrade_cost = round(self.upgrade_cost, 2)
-            self.upgrade_size = self.upgrade_size * self.upgrade_size_rate
-            # self.speed = self.speed - self.upgrades
             self.upgrades += 1
 
-
+            self.cost = self.cost_base * (self.upgrade_growth ** self.upgrades)
+            self.production = floor(self.production_base + self.productivity * (self.upgrades - 1))
 
 
 class Page(Hud, Button):
-    page_amount = count(0)
+    gens = 1
     pages = []
     selfadder_pages = []
 
-    def __init__(self, name, adder_upgrades=0, text="") -> None:
+    def __init__(self, name, generator_upgrades=0, text="") -> None:
 
         self.name = name
         self.text = text
-        self.page_amount = next(self.page_amount)
 
         self.pos_x = int(TILE)
         self.pos_y = int(HEIGHT/2)
@@ -157,66 +113,71 @@ class Page(Hud, Button):
 
         self.button = Button(-1,-1,0,0)
         
-        if self.page_amount < 1:
-            self.adder = Adder(1, adder_upgrades)
+        if len(self.pages) < 1:
+            self.generator = Generator(len(self.pages)+1, 1 if generator_upgrades == 0 else generator_upgrades, False)
         else: 
-            self.adder = SelfAdder(int(self.page_amount), adder_upgrades)
+            self.generator = Generator(len(self.pages)+1 , generator_upgrades)
             self.selfadder_pages.append(self)
 
         self.pages.append(self)
+        self.gens += 1
 
 
     def render(self):
         pygame.draw.rect(window, BLUE, self.rect)
-        if isinstance(self.adder, Adder):
+        if not self.generator.is_generator:
             pass
         else:
-            if self.adder.addition == 0:
+            if self.generator.production == 0:
                 pass
             else:
-                pygame.draw.rect(window, LBLUE, (int(self.size_x / 2), int(self.pos_y), int(((self.graphic_gametick/self.adder.speed)*self.size_x/2)), int(TILE*4)))
+                pygame.draw.rect(window, LBLUE, (int(self.size_x / 2), int(self.pos_y), int(((self.graphic_gametick/self.generator.speed)*self.size_x/2)), int(TILE*4)))
 
 
         self.text_display(f'{self.name}', BLACK, TILE*2, self.pos_y)
         self.text_display(f'{self.text}', ORANGE, WIDTH/2, self.pos_y, TILE*2)
 
-        self.text_display(f'Adding by : {self.adder.addition:,}', WHITE, TILE*2, self.pos_y + 5*TILE)
-        self.text_display(f'Next upgrade: {round(self.adder.addition + self.adder.upgrade_size, 2):,}', WHITE, TILE*2, self.pos_y + 9*TILE)
-        self.text_display(f'Needed to upgrade : {self.adder.upgrade_cost:,} $', WHITE, TILE*2, self.pos_y + 13*TILE)
-        self.text_display(f'Upgrade lvl : {self.adder.upgrades:,}', WHITE, TILE*2, self.pos_y + 17*TILE)
+        self.text_display(f'Adding by : {self.generator.production:,}', WHITE, TILE*2, self.pos_y + 5*TILE, TILE*3)
+        self.text_display(f'Needed to upgrade : {round(self.generator.cost, 2):,} $', WHITE, TILE*2, self.pos_y + 8*TILE, TILE*3)
+        self.text_display(f'Upgrade lvl : {self.generator.upgrades:,}', WHITE, TILE*2, self.pos_y + 11*TILE, TILE*3)
 
         self.button.render()
 
-        if money.amount >= self.adder.upgrade_cost:
+        if money.amount >= self.generator.cost:
             draw_rect_alpha(window, LGREEN, self.button.rect, 100)
 
     def upgrades(self, event, money):
         if self.button.click(event):
-            self.adder.upgrade(money)
+            self.generator.upgrade(money)
 
 class Money():
     def __init__(self, amount) -> None:
         self.amount = float(amount)
 
-    def add(self, adder):
-        self.amount += adder.addition
+    def add(self, generator):
+        self.amount += generator.production
         self.amount = round(self.amount, 2)
 
     def self_add(self):
-        for selfadder in Page.selfadder_pages:  
+        for page in Page.selfadder_pages:  
 
-            if gametick % selfadder.adder.speed == 0:
-                money.add(selfadder.adder)
-                selfadder.graphic_gametick = 0
+            if gametick % page.generator.speed == 0:
+                money.add(page.generator)
+                page.graphic_gametick = 0
 
-            selfadder.graphic_gametick += 1                
+            page.graphic_gametick += 1                
 
 
 def page_dots(pages, page_pos):
-    for i in range(len(pages)):
+    for i, page in enumerate(pages):
         coordinates = (TILE + (TILE*i + TILE)+i, HEIGHT - TILE*2) #Circle Center x, y
-        if i == page_pos:
+
+        if money.amount >= page.generator.cost:
+            draw_circle_alpha(window, WHITE, coordinates, int(TILE/2), 128)
+        
+        elif i == page_pos:
             pygame.draw.circle(window, LBLUE, coordinates, int(TILE/2))
+        
         else:
             pygame.draw.circle(window, MBLUE, coordinates, int(TILE/2))
 
@@ -233,6 +194,13 @@ def draw_rect_alpha(surface, color, rect, alpha):
     shape_surf = pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
     pygame.draw.rect(shape_surf, color_alpha, shape_surf.get_rect())
     surface.blit(shape_surf, rect)
+
+def draw_circle_alpha(surface, color, center, radius, alpha):
+    color_alpha = (color[0], color[1], color[2], alpha)
+    target_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
+    shape_surf = pygame.Surface(target_rect.size, pygame.SRCALPHA)
+    pygame.draw.circle(shape_surf, color_alpha, (radius, radius), radius)
+    surface.blit(shape_surf, target_rect)
 
 def scroll(event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -252,9 +220,10 @@ def quit(keys):
     
 def save_data():
     for i, page in enumerate(Page.pages):
-        data[f"{i}"] = page.adder.upgrades
+        data[f"{i}"] = page.generator.upgrades
     data["money"] = money.amount
     data["time"] = gametick
+
 
 
 pygame.init()
@@ -272,12 +241,13 @@ data = load_file()
 
 money = Money(data["money"])
 
-pick = Page("Clicker", data[f"{len(Page.pages)}"])
-coal = Page("Coal Mine", data[f"{len(Page.pages)}"])
-iron = Page("Iron Mine", data[f"{len(Page.pages)}"])
-silver = Page("Silver Mine", data[f"{len(Page.pages)}"])
-gold = Page("Gold Ore", data[f"{len(Page.pages)}"])
-diamond = Page("Diamonds", data[f"{len(Page.pages)}"])
+pick = Page("Clicker", data[f"{len(Page.pages)+1}"])
+
+cats = Page("Cats", data[f"{len(Page.pages)+1}"])
+
+iron = Page("Iron Mine", data[f"{len(Page.pages)+1}"])
+silver = Page("Silver Mine", data[f"{len(Page.pages)+1}"])
+gold = Page("Gold Ore", data[f"{len(Page.pages)+1}"])
 
 
 page_pos = 0
@@ -304,7 +274,7 @@ while running:
 
     for event in pygame.event.get():
         if buttonClicker.click(event):
-            money.add(pick.adder)
+            money.add(pick.generator)
 
         for page in Page.pages:
             page.upgrades(event, money)
@@ -333,6 +303,7 @@ while running:
     # hud.draw_grid()                                           # GRID
     
     pygame.display.flip()
+
 
 save_data()
 save_file(data)

@@ -18,3 +18,14 @@ LGREEN = Color("#a3ffd7")   #LIGHT GREEN
 GREEN = Color("#73ff69")    #GREEN
 
 TICK = 60
+
+        #prod_base, prod, cost_base
+
+values = {
+    "1": (1, 1.67, 3.738),
+    "2": (60, 20, 60),
+    "3": (540, 90, 720),
+    "4": (4320, 360, 8640),
+    "5": (51840, 2160, 103680),
+}
+

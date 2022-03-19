@@ -8,7 +8,7 @@ Functional
 - [x] Make self adder work
 - [x] Automate creation of more adders
 - [X] Saving
-- [ ] Join the Adder and SelfAdder Classes
+- [X] Join the Adder and SelfAdder Classes
 - [ ] Gradual unlocking, progression system 
 - [ ] Prestige system
 
@@ -24,6 +24,7 @@ Visual
 
 # Math (for future)
 https://gameanalytics.com/blog/idle-game-mathematics/
+https://blog.kongregate.com/the-math-of-idle-games-part-i/
 
 # Colors
 https://lospec.com/palette-list/curiosities
